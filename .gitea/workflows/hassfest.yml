@@ -10,4 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: home-assistant/actions/hassfest@master
+      - name: Run hassfest
+        run: docker run --rm -v ${{ github.workspace }}:/github/workspace ghcr.io/home-assistant/hassfest
