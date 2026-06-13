@@ -10,5 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Debug workspace
+        run: |
+          echo "Workspace: ${{ github.workspace }}"
+          ls ${{ github.workspace }}
+          docker run --rm -v ${{ github.workspace }}:/github/workspace alpine ls /github/workspace
       - name: Run hassfest
-        run: docker run --rm -v ${{ github.workspace }}://github/workspace -w //github/workspace ghcr.io/home-assistant/hassfest
+        run: docker run --rm -v ${{ github.workspace }}:/github/workspace -w /github/workspace ghcr.io/home-assistant/hassfest
