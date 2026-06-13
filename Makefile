@@ -35,13 +35,17 @@ fix:           ## Auto-fix lint issues and reformat
 	$(PYTHON) -m ruff check --fix $(SRC)
 	$(PYTHON) -m ruff format $(SRC)
 
-ICON_SVG := assets/brands/discord_webhook/icon.svg
-ICON_DIR := assets/brands/discord_webhook
+ICON_SVG   := assets/brands/discord_webhook/icon.svg
+ICON_DIR   := assets/brands/discord_webhook
+BRAND_DIR  := custom_components/discord_webhook/brand
 
-icons: $(ICON_DIR)/icon.png $(ICON_DIR)/icon@2x.png  ## Render icon.svg → icon.png + icon@2x.png
+icons: $(ICON_DIR)/icon.png $(ICON_DIR)/icon@2x.png $(BRAND_DIR)/icon.png $(BRAND_DIR)/icon@2x.png  ## Render icon.svg → PNG assets (assets/ and component brand/)
 
-$(ICON_DIR)/icon.png $(ICON_DIR)/icon@2x.png: $(ICON_SVG)
+$(ICON_DIR)/icon.png $(ICON_DIR)/icon@2x.png $(BRAND_DIR)/icon.png $(BRAND_DIR)/icon@2x.png: $(ICON_SVG)
+	mkdir -p $(BRAND_DIR)
 	$(PYTHON) -c "\
 import cairosvg; \
 cairosvg.svg2png(url='$(ICON_SVG)', write_to='$(ICON_DIR)/icon.png',    output_width=256, output_height=256); \
-cairosvg.svg2png(url='$(ICON_SVG)', write_to='$(ICON_DIR)/icon@2x.png', output_width=512, output_height=512)"
+cairosvg.svg2png(url='$(ICON_SVG)', write_to='$(ICON_DIR)/icon@2x.png', output_width=512, output_height=512); \
+cairosvg.svg2png(url='$(ICON_SVG)', write_to='$(BRAND_DIR)/icon.png',    output_width=256, output_height=256); \
+cairosvg.svg2png(url='$(ICON_SVG)', write_to='$(BRAND_DIR)/icon@2x.png', output_width=512, output_height=512)"
