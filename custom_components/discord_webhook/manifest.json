@@ -1,13 +1,13 @@
 {
   "domain": "discord_webhook",
   "name": "Discord Webhook",
-  "documentation": "https://github.com/bensonrodney/homeassistant-discord",
-  "dependencies": ["notify"],
-  "codeowners": ["@bensonrodney"],
-  "requirements": ["aiohttp>=3.7.4"],
-  "version": "1.0.0",
-  "iot_class": "cloud_push",
-  "config_flow": true,
   "after_dependencies": ["http"],
-  "issue_tracker": "https://github.com/bensonrodney/homeassistant-discord/issues"
+  "codeowners": ["@bensonrodney"],
+  "config_flow": true,
+  "dependencies": ["notify"],
+  "documentation": "https://github.com/bensonrodney/homeassistant-discord",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/bensonrodney/homeassistant-discord/issues",
+  "requirements": ["aiohttp>=3.7.4"],
+  "version": "1.0.0"
 }
