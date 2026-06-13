@@ -14,6 +14,7 @@ from homeassistant.components.notify import (
 )
 from homeassistant.const import CONF_NAME, CONF_USERNAME
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
@@ -55,6 +56,7 @@ def get_service(
     _LOGGER.info("Setting up Discord webhook notification service: %s", name)
 
     return DiscordNotificationService(
+        hass=hass,
         name=name,
         webhook_url=webhook_url,
         username=username,
@@ -68,6 +70,7 @@ class DiscordNotificationService(BaseNotificationService):
 
     def __init__(
         self,
+        hass: HomeAssistant,
         name: str,
         webhook_url: str,
         username: str | None = None,
@@ -75,25 +78,13 @@ class DiscordNotificationService(BaseNotificationService):
         tts: bool = DEFAULT_TTS,
     ) -> None:
         """Initialize the service."""
+        self._hass = hass
         self._name = name
         self._webhook_url = webhook_url
         self._username = username
         self._avatar_url = avatar_url
         self._tts = tts
-        self._session: aiohttp.ClientSession | None = None
         _LOGGER.debug("Initialized Discord webhook service: %s", name)
-
-    async def _get_session(self) -> aiohttp.ClientSession:
-        """Get or create an aiohttp client session."""
-        if self._session is None:
-            self._session = aiohttp.ClientSession()
-        return self._session
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Clean up resources when the service is unloaded."""
-        if self._session is not None:
-            await self._session.close()
-            self._session = None
 
     async def async_send_message(self, message: str, **kwargs: Any) -> None:
         """Send a message to a Discord webhook."""
@@ -134,8 +125,7 @@ class DiscordNotificationService(BaseNotificationService):
 
         _LOGGER.debug("Sending payload to Discord: %s", payload)
 
-        # Get or create session and send the request
-        session = await self._get_session()
+        session = async_get_clientsession(self._hass)
         try:
             async with session.post(self._webhook_url, json=payload) as response:
                 if response.status != 204:

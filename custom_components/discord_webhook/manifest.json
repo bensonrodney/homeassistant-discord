@@ -9,5 +9,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/bensonrodney/homeassistant-discord/issues",
   "requirements": ["aiohttp>=3.7.4"],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
