@@ -11,4 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run hassfest
-        run: docker run --rm -v ${{ github.workspace }}:/github/workspace ghcr.io/home-assistant/hassfest
+        run: docker run --rm -v ${{ github.workspace }}:/github/workspace -e GITHUB_WORKSPACE=/github/workspace ghcr.io/home-assistant/hassfest
