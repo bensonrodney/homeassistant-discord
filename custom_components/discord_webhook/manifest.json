@@ -8,6 +8,7 @@
   "version": "1.0.0",
   "iot_class": "cloud_push",
   "config_flow": true,
+  "homeassistant": "2024.4.0",
   "after_dependencies": ["http"],
   "issue_tracker": "https://github.com/bensonrodney/homeassistant-discord/issues"
 }
