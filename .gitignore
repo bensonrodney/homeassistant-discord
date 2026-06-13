@@ -8,6 +8,12 @@ __pycache__/
 venv/
 env/
 
+# Generated brand assets (built from icon.svg via make icons)
+assets/brands/*/icon.png
+assets/brands/*/icon@2x.png
+assets/brands/*/logo.png
+assets/brands/*/logo@2x.png
+
 # Test / coverage artifacts
 .pytest_cache/
 .coverage

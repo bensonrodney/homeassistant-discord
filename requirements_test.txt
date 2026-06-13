@@ -3,3 +3,4 @@ pytest-asyncio
 pytest-homeassistant-custom-component
 ruff
 mypy
+cairosvg
