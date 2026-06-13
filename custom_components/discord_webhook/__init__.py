@@ -1,14 +1,13 @@
 """The Discord Webhook integration."""
+
 from __future__ import annotations
 
 import logging
-from typing import Any
-
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, SOURCE_IMPORT
 from homeassistant.const import CONF_PLATFORM, Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.typing import ConfigType
 
@@ -22,7 +21,6 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_TTS,
     DOMAIN,
-    SERVICE_SEND_MESSAGE,
 )
 
 _LOGGER = logging.getLogger(__name__)
