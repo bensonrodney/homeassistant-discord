@@ -1,22 +1,19 @@
 """Support for Discord Webhook notifications."""
+
 from __future__ import annotations
 
 import logging
 from typing import Any
 
 import aiohttp
-import voluptuous as vol
 
 from homeassistant.components.notify import (
     ATTR_DATA,
-    ATTR_TARGET,
     ATTR_TITLE,
-    PLATFORM_SCHEMA,
     BaseNotificationService,
 )
 from homeassistant.const import CONF_NAME, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
@@ -27,16 +24,16 @@ from .const import (
     CONF_WEBHOOK_URL,
     DEFAULT_NAME,
     DEFAULT_TTS,
-    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def get_service(
     hass: HomeAssistant,
     config: ConfigType,
     discovery_info: DiscoveryInfoType | None = None,
-) -> DiscordNotificationService:
+) -> DiscordNotificationService | None:
     """Get the Discord notification service."""
     if discovery_info is None:
         _LOGGER.error("This platform is only available through discovery")
@@ -44,19 +41,19 @@ def get_service(
 
     # Get the service name from discovery info or use default
     name = discovery_info.get(CONF_NAME, DEFAULT_NAME)
-    
+
     # Get the webhook URL and other parameters from discovery info
     webhook_url = discovery_info.get(CONF_WEBHOOK_URL)
     if not webhook_url:
         _LOGGER.error("No webhook URL provided for %s", name)
         return None
-        
+
     username = discovery_info.get(CONF_USERNAME)
     avatar_url = discovery_info.get(CONF_AVATAR_URL)
     tts = discovery_info.get(CONF_TTS, DEFAULT_TTS)
-    
+
     _LOGGER.info("Setting up Discord webhook notification service: %s", name)
-    
+
     return DiscordNotificationService(
         name=name,
         webhook_url=webhook_url,
@@ -83,7 +80,7 @@ class DiscordNotificationService(BaseNotificationService):
         self._username = username
         self._avatar_url = avatar_url
         self._tts = tts
-        self._session = None
+        self._session: aiohttp.ClientSession | None = None
         _LOGGER.debug("Initialized Discord webhook service: %s", name)
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -102,13 +99,13 @@ class DiscordNotificationService(BaseNotificationService):
         """Send a message to a Discord webhook."""
         title = kwargs.get(ATTR_TITLE)
         data = kwargs.get(ATTR_DATA) or {}
-        
+
         # Build the message content
         if title:
             text = f"**{title}**\n{message}"
         else:
             text = message
-            
+
         payload = {
             "content": text[:2000],  # Discord has a 2000 character limit for content
             "tts": data.get(CONF_TTS, self._tts),
@@ -119,13 +116,15 @@ class DiscordNotificationService(BaseNotificationService):
             payload["username"] = self._username
         if self._avatar_url:
             payload["avatar_url"] = self._avatar_url
-            
+
         # Handle embeds if provided
         if ATTR_EMBEDS in data:
             embeds = data[ATTR_EMBEDS]
             if isinstance(embeds, list):
-                payload["embeds"] = embeds[:10]  # Discord allows max 10 embeds per message
-                
+                payload["embeds"] = embeds[
+                    :10
+                ]  # Discord allows max 10 embeds per message
+
         # Handle images if provided (as URLs)
         if ATTR_IMAGES in data and isinstance(data[ATTR_IMAGES], list):
             if "embeds" not in payload:
@@ -148,7 +147,11 @@ class DiscordNotificationService(BaseNotificationService):
                         response_text,
                     )
                 else:
-                    _LOGGER.debug("Successfully sent message to Discord webhook: %s", self._name)
+                    _LOGGER.debug(
+                        "Successfully sent message to Discord webhook: %s", self._name
+                    )
         except aiohttp.ClientError as err:
-            _LOGGER.error("Error communicating with Discord webhook %s: %s", self._name, err)
+            _LOGGER.error(
+                "Error communicating with Discord webhook %s: %s", self._name, err
+            )
             raise
