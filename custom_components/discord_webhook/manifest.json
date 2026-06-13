@@ -1,7 +1,7 @@
 {
   "domain": "discord_webhook",
   "name": "Discord Webhook",
-  "documentation": "https://github.com/bensonrodney/-homeassistant-discord",
+  "documentation": "https://github.com/bensonrodney/homeassistant-discord",
   "dependencies": ["notify"],
   "codeowners": ["@bensonrodney"],
   "requirements": ["aiohttp>=3.7.4"],
@@ -9,5 +9,5 @@
   "iot_class": "cloud_push",
   "config_flow": true,
   "after_dependencies": ["http"],
-  "issue_tracker": "https://github.com/bensonrodney/-homeassistant-discord/issues"
+  "issue_tracker": "https://github.com/bensonrodney/homeassistant-discord/issues"
 }
