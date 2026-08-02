@@ -16,7 +16,7 @@ A powerful Home Assistant integration for sending rich notifications to Discord 
 
 ## Configuration
 
-### Option 0: UI Config Flow (Recommended)
+### Option 1: UI Config Flow (Recommended)
 
 You can configure this integration entirely from the Home Assistant UI:
 
@@ -34,7 +34,7 @@ Notes:
 - Each config flow entry creates its own notify service, allowing you to maintain multiple distinct Discord webhooks (e.g., alerts vs. general updates).
 - You can add multiple instances by repeating the above steps. Duplicate entries with the same `webhook_url` are prevented.
 
-### Option 1: YAML — Multiple Webhooks
+### Option 2: YAML — Multiple Webhooks
 
 Configure multiple Discord webhooks in YAML. Each webhook will be available as a separate notification service.
 
@@ -52,7 +52,7 @@ discord_webhook:
       username: "Home Security"
 ```
 
-### Option 2: YAML — Using the Notification Platform
+### Option 3: YAML — Using the Notification Platform
 
 You can also configure webhooks directly in the notify platform:
 
@@ -66,7 +66,7 @@ notify:
     tts: false  # Optional, default false
 ```
 
-### Option 3: YAML — Legacy Configuration (Single Webhook)
+### Option 4: YAML — Legacy Configuration (Single Webhook)
 
 For backward compatibility, a single webhook can still be configured:
 
@@ -91,7 +91,7 @@ data:
 
 ## Documentation
 
-For complete documentation, including advanced features like embeds, images, and automation examples, please see the [full documentation](custom_components/discord_webhook/README.md).
+For complete documentation, including advanced features like embeds, images, and automation examples, please see the [advanced usage guide](docs/advanced-usage.md).
 
 ## YAML Import (How YAML becomes UI entries)
 
@@ -102,36 +102,6 @@ If you configure webhooks in `configuration.yaml` under `discord_webhook:`, they
 - Invalid entries (e.g., `webhook_url` not starting with `http`) are safely ignored during import.
 
 After import, you can manage these entries from Settings > Devices & Services > Integrations like any other UI-added instance.
-
-## Showing the Discord icon locally (no external PRs)
-
-Home Assistant displays integration icons/logos from the central brands service. If you prefer not to submit a PR to the official brands repository yet, you can still show the Discord icon locally using a HACS add-on like "custom-brand-icons" (or similar community tools).
-
-This repository includes a scaffold for the required brand assets at:
-
-- `assets/brands/discord_webhook/`
-
-Expected PNG files (per Home Assistant brands spec):
-
-- `icon.png` — 256x256, square
-- `icon@2x.png` — 512x512, square
-- `logo.png` — landscape; shortest side 256 px (max 256)
-- `logo@2x.png` — landscape; shortest side 512 px (max 512)
-
-Notes:
-
-- The directory name must match the integration domain: `discord_webhook`.
-- All files should be PNG, trimmed (minimal transparent padding), optimized, and preferably interlaced.
-- If you only have the square Discord Clyde glyph, the icon can be used without logos; some tools will fall back to the icon when a logo is missing.
-
-Using HACS custom-brand-icons (example):
-
-1. Install HACS if not already installed.
-2. Add and install the community repository for custom brand icons (follow their documentation).
-3. Place the prepared images (`icon.png`, `icon@2x.png`, and optionally `logo*.png`) in the path expected by that tool (commonly under your Home Assistant `config/www/` directory). Refer to the tool's README for the exact path.
-4. Restart Home Assistant and clear the browser cache. The Integrations UI tile for `discord_webhook` should display the Discord icon.
-
-When you're ready to make the icon official, submit these files to the Home Assistant `brands` repository under `custom_integrations/discord_webhook/`.
 
 ## License
 
