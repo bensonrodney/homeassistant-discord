@@ -21,5 +21,24 @@
       "already_configured": "A webhook with this URL is already configured.",
       "invalid_url": "Invalid configuration: Webhook URL must start with http or https."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit Discord Webhook",
+        "description": "Update the settings for this Discord webhook.",
+        "data": {
+          "name": "Name",
+          "webhook_url": "Webhook URL",
+          "username": "Username (optional)",
+          "avatar_url": "Avatar URL (optional)",
+          "tts": "Text-to-Speech"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "Please enter a valid URL starting with http or https.",
+      "already_configured": "A webhook with this URL is already configured."
+    }
   }
 }

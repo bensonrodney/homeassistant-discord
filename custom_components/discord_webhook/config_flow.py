@@ -8,6 +8,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
+from homeassistant.core import callback
 
 from .const import (
     CONF_AVATAR_URL,
@@ -42,6 +43,14 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Discord Webhook."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> OptionsFlowHandler:
+        """Return the options flow handler."""
+        return OptionsFlowHandler()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -96,3 +105,59 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         title = data.get(CONF_NAME) or DEFAULT_NAME
         return self.async_create_entry(title=title, data=data)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options flow for Discord Webhook (edit an existing entry)."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+
+        # Merge options over data so existing options are reflected in the form
+        current = {**self.config_entry.data, **self.config_entry.options}
+
+        if user_input is not None:
+            data: dict[str, Any] = {
+                CONF_NAME: user_input.get(CONF_NAME) or DEFAULT_NAME,
+                CONF_WEBHOOK_URL: (user_input.get(CONF_WEBHOOK_URL) or "").strip(),
+                CONF_USERNAME: (user_input.get(CONF_USERNAME) or "").strip() or None,
+                CONF_AVATAR_URL: (user_input.get(CONF_AVATAR_URL) or "").strip()
+                or None,
+                CONF_TTS: bool(user_input.get(CONF_TTS, DEFAULT_TTS)),
+            }
+
+            if not data[CONF_WEBHOOK_URL].startswith("http"):
+                errors[CONF_WEBHOOK_URL] = "invalid_url"
+
+            if not errors and data[CONF_WEBHOOK_URL] != self.config_entry.unique_id:
+                # Changing webhook URL — check it isn't already used by another entry
+                existing_urls = {
+                    e.unique_id
+                    for e in self.hass.config_entries.async_entries(DOMAIN)
+                    if e.entry_id != self.config_entry.entry_id
+                }
+                if data[CONF_WEBHOOK_URL] in existing_urls:
+                    errors[CONF_WEBHOOK_URL] = "already_configured"
+
+            if not errors:
+                # Keep title and unique_id in sync with any changes
+                updates: dict[str, Any] = {}
+                if data[CONF_WEBHOOK_URL] != self.config_entry.unique_id:
+                    updates["unique_id"] = data[CONF_WEBHOOK_URL]
+                new_title = data.get(CONF_NAME) or DEFAULT_NAME
+                if new_title != self.config_entry.title:
+                    updates["title"] = new_title
+                if updates:
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry, **updates
+                    )
+
+                return self.async_create_entry(data=data)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=_schema(user_input or current),
+            errors=errors,
+        )

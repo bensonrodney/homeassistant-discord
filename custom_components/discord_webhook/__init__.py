@@ -119,7 +119,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Discord Webhook from a config entry."""
-    data = entry.data
+    # Options (set via the edit UI) take precedence over the original data
+    data = {**entry.data, **entry.options}
     name = data.get(CONF_NAME, DEFAULT_NAME)
     webhook_url = data[CONF_WEBHOOK_URL]
     username = data.get(CONF_USERNAME)
@@ -138,7 +139,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
 
+    # Reload the entry when the user saves changes via the options flow
+    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
+
     return True
+
+
+async def _async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the config entry when options are updated."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
