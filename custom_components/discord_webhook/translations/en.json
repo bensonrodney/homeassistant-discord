@@ -10,12 +10,14 @@
           "webhook_url": "Webhook URL",
           "username": "Username (optional)",
           "avatar_url": "Avatar URL (optional)",
-          "tts": "Text-to-Speech"
+          "tts": "Text-to-Speech",
+          "send_test_message": "Send a test message to verify the webhook"
         }
       }
     },
     "error": {
-      "invalid_url": "Please enter a valid URL starting with http or https."
+      "invalid_url": "Please enter a valid URL starting with http or https.",
+      "test_failed": "Test message failed. Check the webhook URL and try again."
     },
     "abort": {
       "already_configured": "A webhook with this URL is already configured.",
@@ -32,13 +34,15 @@
           "webhook_url": "Webhook URL",
           "username": "Username (optional)",
           "avatar_url": "Avatar URL (optional)",
-          "tts": "Text-to-Speech"
+          "tts": "Text-to-Speech",
+          "send_test_message": "Send a test message to verify the webhook"
         }
       }
     },
     "error": {
       "invalid_url": "Please enter a valid URL starting with http or https.",
-      "already_configured": "A webhook with this URL is already configured."
+      "already_configured": "A webhook with this URL is already configured.",
+      "test_failed": "Test message failed. Check the webhook URL and try again."
     }
   }
 }
