@@ -2,7 +2,9 @@ PYTHON := .venv/bin/python
 VENV   := .venv
 SRC    := custom_components tests
 
-.PHONY: help install lint format format-check typecheck test check fix icons
+-include .sandbox.mk
+
+.PHONY: help install lint format format-check typecheck test check fix icons deploy
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?##' $(MAKEFILE_LIST) \
@@ -30,6 +32,11 @@ test:          ## Run the test suite
 	$(PYTHON) -m pytest tests/
 
 check: lint format-check typecheck test  ## Run all checks (CI)
+
+deploy:        ## Sync integration to sandbox HA and restart (requires .sandbox.mk)
+	@test -n "$(SANDBOX_HOST)" || (echo "Error: SANDBOX_HOST not set — create .sandbox.mk (see .sandbox.mk.example)"; exit 1)
+	rsync -av --delete --exclude='__pycache__' --exclude='*.pyc' custom_components/discord_webhook/ $(SANDBOX_HOST):$(SANDBOX_DIR)/
+	ssh $(SANDBOX_HOST) docker restart $(SANDBOX_CONTAINER)
 
 fix:           ## Auto-fix lint issues and reformat
 	$(PYTHON) -m ruff check --fix $(SRC)

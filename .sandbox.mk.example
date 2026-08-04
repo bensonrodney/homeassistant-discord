@@ -1,0 +1,3 @@
+SANDBOX_HOST      := user@your-ha-host
+SANDBOX_DIR       := /path/to/config/custom_components/discord_webhook
+SANDBOX_CONTAINER := homeassistant
