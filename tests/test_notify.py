@@ -1,16 +1,12 @@
 """Tests for notify.py — verifies DiscordNotificationService and get_service."""
 
-import aiohttp
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import aiohttp
+import pytest
 from homeassistant.components.notify import ATTR_DATA, ATTR_TITLE
 from homeassistant.core import HomeAssistant
 
-from custom_components.discord_webhook.notify import (
-    DiscordNotificationService,
-    get_service,
-)
 from custom_components.discord_webhook.const import (
     ATTR_EMBEDS,
     ATTR_IMAGES,
@@ -18,6 +14,10 @@ from custom_components.discord_webhook.const import (
     CONF_TTS,
     CONF_WEBHOOK_URL,
     DEFAULT_TTS,
+)
+from custom_components.discord_webhook.notify import (
+    DiscordNotificationService,
+    get_service,
 )
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/123456789/abcdefghijklmnop"
@@ -121,7 +121,9 @@ async def test_send_message_includes_default_tts(hass: HomeAssistant) -> None:
     assert _sent_payload(mock_session)["tts"] is False
 
 
-async def test_send_message_with_title_prepends_bold_prefix(hass: HomeAssistant) -> None:
+async def test_send_message_with_title_prepends_bold_prefix(
+    hass: HomeAssistant,
+) -> None:
     service = _make_service(hass)
     mock_session = _make_mock_session()
 
@@ -147,7 +149,9 @@ async def test_content_is_truncated_to_2000_characters(hass: HomeAssistant) -> N
     assert len(_sent_payload(mock_session)["content"]) == 2000
 
 
-async def test_username_and_avatar_included_in_payload_when_configured(hass: HomeAssistant) -> None:
+async def test_username_and_avatar_included_in_payload_when_configured(
+    hass: HomeAssistant,
+) -> None:
     service = _make_service(
         hass, username="BotUser", avatar_url="https://example.com/avatar.png"
     )
@@ -164,7 +168,9 @@ async def test_username_and_avatar_included_in_payload_when_configured(hass: Hom
     assert payload["avatar_url"] == "https://example.com/avatar.png"
 
 
-async def test_username_and_avatar_absent_from_payload_when_not_configured(hass: HomeAssistant) -> None:
+async def test_username_and_avatar_absent_from_payload_when_not_configured(
+    hass: HomeAssistant,
+) -> None:
     service = _make_service(hass)
     mock_session = _make_mock_session()
 
@@ -250,12 +256,14 @@ async def test_non_204_response_logs_error_without_raising(hass: HomeAssistant) 
         status=400, response_text='{"message":"Unknown Webhook"}'
     )
 
-    with patch(
-        "custom_components.discord_webhook.notify.async_get_clientsession",
-        return_value=mock_session,
+    with (
+        patch(
+            "custom_components.discord_webhook.notify.async_get_clientsession",
+            return_value=mock_session,
+        ),
+        patch("custom_components.discord_webhook.notify._LOGGER") as mock_logger,
     ):
-        with patch("custom_components.discord_webhook.notify._LOGGER") as mock_logger:
-            await service.async_send_message("Hello")  # must not raise
+        await service.async_send_message("Hello")  # must not raise
 
     mock_logger.error.assert_called_once()
 
@@ -268,12 +276,14 @@ async def test_aiohttp_client_error_is_reraised(hass: HomeAssistant) -> None:
     mock_session = MagicMock()
     mock_session.post = MagicMock(return_value=mock_cm)
 
-    with patch(
-        "custom_components.discord_webhook.notify.async_get_clientsession",
-        return_value=mock_session,
+    with (
+        patch(
+            "custom_components.discord_webhook.notify.async_get_clientsession",
+            return_value=mock_session,
+        ),
+        pytest.raises(aiohttp.ClientError),
     ):
-        with pytest.raises(aiohttp.ClientError):
-            await service.async_send_message("Hello")
+        await service.async_send_message("Hello")
 
 
 # ---------------------------------------------------------------------------

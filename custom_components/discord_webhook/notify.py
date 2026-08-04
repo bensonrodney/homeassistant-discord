@@ -6,7 +6,6 @@ import logging
 from typing import Any
 
 import aiohttp
-
 from homeassistant.components.notify import (
     ATTR_DATA,
     ATTR_TITLE,

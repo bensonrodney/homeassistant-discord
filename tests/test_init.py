@@ -77,9 +77,11 @@ async def test_async_setup_skips_webhook_already_in_config_entries(
     existing.unique_id = WEBHOOK_URL
     mock_task = _task_sink()
 
-    with patch.object(hass.config_entries, "async_entries", return_value=[existing]):
-        with patch.object(hass, "async_create_task", mock_task):
-            result = await async_setup(hass, {DOMAIN: {CONF_WEBHOOK_URL: WEBHOOK_URL}})
+    with (
+        patch.object(hass.config_entries, "async_entries", return_value=[existing]),
+        patch.object(hass, "async_create_task", mock_task),
+    ):
+        result = await async_setup(hass, {DOMAIN: {CONF_WEBHOOK_URL: WEBHOOK_URL}})
 
     assert result is True
     assert mock_task.call_count == 0
@@ -92,21 +94,21 @@ async def test_async_setup_skips_only_the_duplicate_in_a_list(
     existing.unique_id = WEBHOOK_URL
     mock_task = _task_sink()
 
-    with patch.object(hass.config_entries, "async_entries", return_value=[existing]):
-        with patch.object(hass, "async_create_task", mock_task):
-            result = await async_setup(
-                hass,
-                {
-                    DOMAIN: {
-                        "webhooks": [
-                            {
-                                CONF_WEBHOOK_URL: WEBHOOK_URL
-                            },  # already configured → skip
-                            {CONF_WEBHOOK_URL: WEBHOOK_URL_2},  # new → schedule import
-                        ]
-                    }
-                },
-            )
+    with (
+        patch.object(hass.config_entries, "async_entries", return_value=[existing]),
+        patch.object(hass, "async_create_task", mock_task),
+    ):
+        result = await async_setup(
+            hass,
+            {
+                DOMAIN: {
+                    "webhooks": [
+                        {CONF_WEBHOOK_URL: WEBHOOK_URL},  # already configured → skip
+                        {CONF_WEBHOOK_URL: WEBHOOK_URL_2},  # new → schedule import
+                    ]
+                }
+            },
+        )
 
     assert result is True
     assert mock_task.call_count == 1
@@ -141,12 +143,14 @@ async def test_async_setup_entry_schedules_notify_platform_load(
     entry.title = "Test"
     mock_task = _task_sink()
 
-    with patch(
-        "custom_components.discord_webhook.discovery.async_load_platform",
-        new_callable=AsyncMock,
+    with (
+        patch(
+            "custom_components.discord_webhook.discovery.async_load_platform",
+            new_callable=AsyncMock,
+        ),
+        patch.object(hass, "async_create_task", mock_task),
     ):
-        with patch.object(hass, "async_create_task", mock_task):
-            await async_setup_entry(hass, entry)
+        await async_setup_entry(hass, entry)
 
     assert mock_task.call_count == 1
 

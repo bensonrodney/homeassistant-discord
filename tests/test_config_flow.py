@@ -23,7 +23,9 @@ WEBHOOK_URL_2 = "https://discord.com/api/webhooks/987654321/qrstuvwxyz"
 
 async def _save(hass: HomeAssistant, flow_id: str, user_input: dict) -> dict:
     """Submit the user/init form then pick Save from the confirm menu."""
-    result = await hass.config_entries.flow.async_configure(flow_id, user_input=user_input)
+    result = await hass.config_entries.flow.async_configure(
+        flow_id, user_input=user_input
+    )
     assert result["type"] == FlowResultType.MENU, result
     assert result["step_id"] == "confirm"
     return await hass.config_entries.flow.async_configure(
@@ -68,7 +70,11 @@ async def test_user_step_creates_entry_with_required_fields(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    result = await _save(hass, result["flow_id"], {CONF_WEBHOOK_URL: WEBHOOK_URL, CONF_NAME: "My Discord"})
+    result = await _save(
+        hass,
+        result["flow_id"],
+        {CONF_WEBHOOK_URL: WEBHOOK_URL, CONF_NAME: "My Discord"},
+    )
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["title"] == "My Discord"
     data = result["data"]
@@ -93,12 +99,16 @@ async def test_user_step_stores_all_optional_fields(hass: HomeAssistant) -> None
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    result = await _save(hass, result["flow_id"], {
-        CONF_WEBHOOK_URL: WEBHOOK_URL,
-        CONF_USERNAME: "BotName",
-        CONF_AVATAR_URL: "https://example.com/avatar.png",
-        CONF_TTS: True,
-    })
+    result = await _save(
+        hass,
+        result["flow_id"],
+        {
+            CONF_WEBHOOK_URL: WEBHOOK_URL,
+            CONF_USERNAME: "BotName",
+            CONF_AVATAR_URL: "https://example.com/avatar.png",
+            CONF_TTS: True,
+        },
+    )
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_USERNAME] == "BotName"
     assert result["data"][CONF_AVATAR_URL] == "https://example.com/avatar.png"
@@ -111,11 +121,15 @@ async def test_user_step_normalizes_empty_optional_strings_to_none(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    result = await _save(hass, result["flow_id"], {
-        CONF_WEBHOOK_URL: WEBHOOK_URL,
-        CONF_USERNAME: "",
-        CONF_AVATAR_URL: "   ",
-    })
+    result = await _save(
+        hass,
+        result["flow_id"],
+        {
+            CONF_WEBHOOK_URL: WEBHOOK_URL,
+            CONF_USERNAME: "",
+            CONF_AVATAR_URL: "   ",
+        },
+    )
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_USERNAME] is None
     assert result["data"][CONF_AVATAR_URL] is None
