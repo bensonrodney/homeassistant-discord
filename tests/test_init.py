@@ -120,6 +120,7 @@ async def test_async_setup_skips_only_the_duplicate_in_a_list(
 async def test_async_setup_entry_returns_true(hass: HomeAssistant) -> None:
     entry = MagicMock(spec=ConfigEntry)
     entry.data = {CONF_NAME: "Test", CONF_WEBHOOK_URL: WEBHOOK_URL}
+    entry.options = {}
     entry.title = "Test"
 
     with patch(
@@ -136,6 +137,7 @@ async def test_async_setup_entry_schedules_notify_platform_load(
 ) -> None:
     entry = MagicMock(spec=ConfigEntry)
     entry.data = {CONF_NAME: "Test", CONF_WEBHOOK_URL: WEBHOOK_URL}
+    entry.options = {}
     entry.title = "Test"
     mock_task = _task_sink()
 
