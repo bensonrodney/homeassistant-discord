@@ -26,17 +26,24 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_SEND_TEST = "send_test_message"
 
-
-async def _async_test_webhook(hass, webhook_url: str) -> bool:
+async def _async_test_webhook(
+    hass,
+    webhook_url: str,
+    username: str | None = None,
+    avatar_url: str | None = None,
+) -> bool:
     """POST a test message to the webhook. Returns True on HTTP 204."""
     session = async_get_clientsession(hass)
+    payload: dict[str, Any] = {
+        "content": "🔔 Test message from Home Assistant Discord Webhook integration."
+    }
+    if username:
+        payload["username"] = username
+    if avatar_url:
+        payload["avatar_url"] = avatar_url
     try:
-        async with session.post(
-            webhook_url,
-            json={"content": "🔔 Test message from Home Assistant Discord Webhook integration."},
-        ) as response:
+        async with session.post(webhook_url, json=payload) as response:
             return response.status == 204
     except aiohttp.ClientError as err:
         _LOGGER.debug("Test webhook request failed: %s", err)
@@ -81,7 +88,6 @@ def _schema(
             username_field: str,
             avatar_field: str,
             vol.Optional(CONF_TTS, default=defaults.get(CONF_TTS, DEFAULT_TTS)): bool,
-            vol.Optional(CONF_SEND_TEST, default=False): bool,
         }
     )
 
@@ -90,6 +96,10 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Discord Webhook."""
 
     VERSION = 1
+
+    def __init__(self) -> None:
+        self._data: dict[str, Any] = {}
+        self._test_result: str = ""
 
     @staticmethod
     @callback
@@ -105,7 +115,6 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            # Normalize empty optional strings to None
             data: dict[str, Any] = {
                 CONF_NAME: user_input.get(CONF_NAME) or DEFAULT_NAME,
                 CONF_WEBHOOK_URL: (user_input.get(CONF_WEBHOOK_URL) or "").strip(),
@@ -115,33 +124,64 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_TTS: bool(user_input.get(CONF_TTS, DEFAULT_TTS)),
             }
 
-            # Basic validation
             if not data[CONF_WEBHOOK_URL].startswith("http"):
                 errors[CONF_WEBHOOK_URL] = "invalid_url"
 
-            # Optional test message
-            if not errors and user_input.get(CONF_SEND_TEST):
-                if not await _async_test_webhook(self.hass, data[CONF_WEBHOOK_URL]):
-                    errors["base"] = "test_failed"
-
-            # Prevent duplicate webhook URLs
             if not errors:
                 await self.async_set_unique_id(data[CONF_WEBHOOK_URL])
                 self._abort_if_unique_id_configured()
+                self._data = data
+                self._test_result = ""
+                return await self.async_step_confirm()
 
-            if not errors:
-                title = data.get(CONF_NAME) or DEFAULT_NAME
-                return self.async_create_entry(title=title, data=data)
-
-        # Always reset the test checkbox so a failed test doesn't re-fire on resubmit
-        defaults = {**(user_input or {}), CONF_SEND_TEST: False}
+        defaults = user_input or self._data
         return self.async_show_form(
-            step_id="user", data_schema=_schema(defaults), errors=errors
+            step_id="user",
+            data_schema=_schema(defaults),
+            errors=errors,
+            last_step=False,
+        )
+
+    async def async_step_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="confirm",
+            menu_options=["test_webhook", "edit_settings", "save"],
+            description_placeholders={"test_result": self._test_result},
+        )
+
+    async def async_step_test_webhook(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        test_ok = await _async_test_webhook(
+            self.hass,
+            self._data[CONF_WEBHOOK_URL],
+            self._data.get(CONF_USERNAME),
+            self._data.get(CONF_AVATAR_URL),
+        )
+        self._test_result = (
+            "✅ Test message sent successfully!"
+            if test_ok
+            else "❌ Test failed — check the webhook URL and try again."
+        )
+        return await self.async_step_confirm()
+
+    async def async_step_edit_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_user()
+
+    async def async_step_save(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return self.async_create_entry(
+            title=self._data.get(CONF_NAME) or DEFAULT_NAME,
+            data=self._data,
         )
 
     async def async_step_import(self, user_input: dict[str, Any]) -> ConfigFlowResult:
         """Handle import from YAML configuration."""
-        # Normalize like user step
         data: dict[str, Any] = {
             CONF_NAME: user_input.get(CONF_NAME) or DEFAULT_NAME,
             CONF_WEBHOOK_URL: (user_input.get(CONF_WEBHOOK_URL) or "").strip(),
@@ -150,7 +190,6 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_TTS: bool(user_input.get(CONF_TTS, DEFAULT_TTS)),
         }
 
-        # Basic validation: if invalid, abort import to avoid creating bad entries
         if not data[CONF_WEBHOOK_URL].startswith("http"):
             return self.async_abort(reason="invalid_url")
 
@@ -164,12 +203,14 @@ class DiscordWebhookConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Discord Webhook (edit an existing entry)."""
 
+    def __init__(self) -> None:
+        self._data: dict[str, Any] = {}
+        self._test_result: str = ""
+
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
-
-        # Merge options over data so existing options are reflected in the form
         current = {**self.config_entry.data, **self.config_entry.options}
 
         if user_input is not None:
@@ -188,7 +229,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 errors[CONF_WEBHOOK_URL] = "invalid_url"
 
             if not errors and data[CONF_WEBHOOK_URL] != self.config_entry.unique_id:
-                # Changing webhook URL — check it isn't already used by another entry
                 existing_urls = {
                     e.unique_id
                     for e in self.hass.config_entries.async_entries(DOMAIN)
@@ -197,30 +237,59 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 if data[CONF_WEBHOOK_URL] in existing_urls:
                     errors[CONF_WEBHOOK_URL] = "already_configured"
 
-            # Optional test message
-            if not errors and user_input.get(CONF_SEND_TEST):
-                if not await _async_test_webhook(self.hass, data[CONF_WEBHOOK_URL]):
-                    errors["base"] = "test_failed"
-
             if not errors:
-                # Keep title and unique_id in sync with any changes
-                updates: dict[str, Any] = {}
-                if data[CONF_WEBHOOK_URL] != self.config_entry.unique_id:
-                    updates["unique_id"] = data[CONF_WEBHOOK_URL]
-                new_title = data.get(CONF_NAME) or DEFAULT_NAME
-                if new_title != self.config_entry.title:
-                    updates["title"] = new_title
-                if updates:
-                    self.hass.config_entries.async_update_entry(
-                        self.config_entry, **updates
-                    )
+                self._data = data
+                self._test_result = ""
+                return await self.async_step_confirm()
 
-                return self.async_create_entry(data=data)
-
-        # Always reset the test checkbox so a failed test doesn't re-fire on resubmit
-        defaults = {**(user_input or current), CONF_SEND_TEST: False}
+        # self._data holds the user's pending edits if they navigated back from confirm
+        defaults = user_input or self._data or current
         return self.async_show_form(
             step_id="init",
             data_schema=_schema(defaults, suggested_values=True),
             errors=errors,
+            last_step=False,
         )
+
+    async def async_step_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="confirm",
+            menu_options=["test_webhook", "edit_settings", "save"],
+            description_placeholders={"test_result": self._test_result},
+        )
+
+    async def async_step_test_webhook(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        test_ok = await _async_test_webhook(
+            self.hass,
+            self._data[CONF_WEBHOOK_URL],
+            self._data.get(CONF_USERNAME) or None,
+            self._data.get(CONF_AVATAR_URL) or None,
+        )
+        self._test_result = (
+            "✅ Test message sent successfully!"
+            if test_ok
+            else "❌ Test failed — check the webhook URL and try again."
+        )
+        return await self.async_step_confirm()
+
+    async def async_step_edit_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_init()
+
+    async def async_step_save(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        updates: dict[str, Any] = {}
+        if self._data[CONF_WEBHOOK_URL] != self.config_entry.unique_id:
+            updates["unique_id"] = self._data[CONF_WEBHOOK_URL]
+        new_title = self._data.get(CONF_NAME) or DEFAULT_NAME
+        if new_title != self.config_entry.title:
+            updates["title"] = new_title
+        if updates:
+            self.hass.config_entries.async_update_entry(self.config_entry, **updates)
+        return self.async_create_entry(data=self._data)

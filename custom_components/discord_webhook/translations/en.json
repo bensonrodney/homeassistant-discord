@@ -10,14 +10,21 @@
           "webhook_url": "Webhook URL",
           "username": "Username (optional)",
           "avatar_url": "Avatar URL (optional)",
-          "tts": "Text-to-Speech",
-          "send_test_message": "Send a test message to verify the webhook"
+          "tts": "Text-to-Speech"
+        }
+      },
+      "confirm": {
+        "title": "Webhook ready",
+        "description": "Your webhook settings are ready. You can send a test message before saving.{test_result}",
+        "menu_options": {
+          "test_webhook": "Send test message",
+          "edit_settings": "Edit settings",
+          "save": "Save"
         }
       }
     },
     "error": {
-      "invalid_url": "Please enter a valid URL starting with http or https.",
-      "test_failed": "Test message failed. Check the webhook URL and try again."
+      "invalid_url": "Please enter a valid URL starting with http or https."
     },
     "abort": {
       "already_configured": "A webhook with this URL is already configured.",
@@ -34,15 +41,22 @@
           "webhook_url": "Webhook URL",
           "username": "Username (optional)",
           "avatar_url": "Avatar URL (optional)",
-          "tts": "Text-to-Speech",
-          "send_test_message": "Send a test message to verify the webhook"
+          "tts": "Text-to-Speech"
+        }
+      },
+      "confirm": {
+        "title": "Changes ready",
+        "description": "Your changes are ready. You can send a test message before saving.{test_result}",
+        "menu_options": {
+          "test_webhook": "Send test message",
+          "edit_settings": "Edit settings",
+          "save": "Save"
         }
       }
     },
     "error": {
       "invalid_url": "Please enter a valid URL starting with http or https.",
-      "already_configured": "A webhook with this URL is already configured.",
-      "test_failed": "Test message failed. Check the webhook URL and try again."
+      "already_configured": "A webhook with this URL is already configured."
     }
   }
 }
