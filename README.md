@@ -1,48 +1,82 @@
-# Discord Webhook Integration for Home Assistant
+# Discord Webhook for Home Assistant
 
-A powerful Home Assistant integration for sending rich notifications to Discord using webhooks. This integration supports multiple webhooks, rich embeds, images, and more.
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/v/release/bensonrodney/homeassistant-discord)](https://github.com/bensonrodney/homeassistant-discord/releases)
+[![License](https://img.shields.io/github/license/bensonrodney/homeassistant-discord)](LICENSE)
+
+A Home Assistant custom integration that sends rich notifications to Discord via [webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) — no bot, token, or extra permissions required. Configure everything from the UI, send messages with titles/embeds/images, and route different automations to different channels or servers.
 
 ## Features
 
-- 🚀 **Multiple Webhooks** - Configure multiple Discord webhooks with different settings
-- 📱 **Rich Notifications** - Send formatted messages with titles, images, and embeds
-- 🔔 **Flexible Configuration** - Multiple configuration options to suit your needs
-- 🔄 **Backward Compatible** - Supports legacy configuration format
+- 🖥️ **UI Config Flow** — add, edit, and test webhooks entirely from Settings → Devices & Services, no YAML required
+- 🚀 **Multiple Webhooks** — each configured webhook becomes its own `notify` service, so you can post to as many channels/servers as you like
+- 📬 **Rich Notifications** — titles, embeds, and images in addition to plain text messages
+- ✅ **Built-in Test Message** — send a test message to Discord before saving a webhook, right from the config flow
+- 🔄 **YAML Import & Backward Compatibility** — existing `configuration.yaml` setups are automatically imported as UI entries
 
 ## Installation
 
-1. Copy the `discord_webhook` folder to your Home Assistant's `custom_components` directory (found in the `config` directory of your Home Assistant installation).
-2. Restart Home Assistant to load the integration.
+### HACS (recommended)
+
+This integration isn't in the default HACS store, so add it as a custom repository:
+
+1. In Home Assistant, go to **HACS → Integrations**.
+2. Click the **⋮** menu (top right) → **Custom repositories**.
+3. Add `https://github.com/bensonrodney/homeassistant-discord`, category **Integration**.
+4. Find **Discord Webhook** in HACS and click **Download**.
+5. Restart Home Assistant.
+
+### Manual
+
+1. Copy the `custom_components/discord_webhook` folder from this repository into your Home Assistant `config/custom_components/` directory.
+2. Restart Home Assistant.
 
 ## Configuration
 
-### Option 1: UI Config Flow (Recommended)
+After installing and restarting, add the integration from the UI:
 
-You can configure this integration entirely from the Home Assistant UI:
+1. Go to **Settings → Devices & Services → Add Integration**.
+2. Search for and select **Discord Webhook**.
+3. Fill in the form:
+   - **Name** — used to generate the notify service name (e.g. `Home Alerts` → `notify.home_alerts`)
+   - **Webhook URL** *(required)* — from your Discord channel's **Integrations → Webhooks** settings
+   - **Username** *(optional)* — overrides the webhook's default posting name
+   - **Avatar URL** *(optional)* — overrides the webhook's default avatar
+   - **Text-to-Speech** *(optional)* — send the message as a Discord TTS message
+4. On the confirmation screen you can **Send test message** to verify Discord accepts the webhook before committing, **Edit settings** to go back, or **Save** to create the entry.
 
-1. Go to: Settings > Devices & Services > Add Integration.
-2. Search for and select "Discord Webhook".
-3. Enter the details for the webhook:
-   - Name (used for the service name)
-   - Webhook URL (required)
-   - Username (optional)
-   - Avatar URL (optional)
-   - TTS (optional)
-4. Submit to create the entry.
+### Configuring multiple webhooks (different channels/servers)
 
-Notes:
-- Each config flow entry creates its own notify service, allowing you to maintain multiple distinct Discord webhooks (e.g., alerts vs. general updates).
-- You can add multiple instances by repeating the above steps. Duplicate entries with the same `webhook_url` are prevented.
+Each Discord webhook URL is tied to one specific channel in one specific server. To post to multiple channels or multiple servers, repeat the **Add Integration** flow once per destination:
 
-### Option 2: YAML — Multiple Webhooks
+1. In Discord, create a separate webhook for each channel/server you want Home Assistant to post to (**Channel Settings → Integrations → Webhooks → New Webhook**), and copy each one's URL.
+2. In Home Assistant, go to **Settings → Devices & Services → Add Integration → Discord Webhook** again for each webhook, giving each one a distinct **Name** (e.g. `Home Alerts`, `Security Alerts`, `Family Server`) and pasting in that webhook's URL.
+3. Each entry appears separately under **Devices & Services** and creates its own `notify.<name>` service — there's no limit on how many you can add, and duplicate entries with the same webhook URL are automatically prevented.
+4. Target a specific channel/server by calling that entry's service, e.g.:
 
-Configure multiple Discord webhooks in YAML. Each webhook will be available as a separate notification service.
+   ```yaml
+   service: notify.home_alerts
+   data:
+     message: "Front door unlocked"
+   ---
+   service: notify.security_alerts
+   data:
+     message: "Motion detected in the garage"
+   ```
+
+You can edit any entry later (including changing its webhook URL, name, or other options) from its **Configure** button on the integration's card, which reuses the same test/edit/save flow as adding a new one.
+
+### YAML configuration (optional)
+
+YAML setup is still supported and is automatically imported into UI entries on startup, but the UI flow above is the recommended path for new setups.
+
+<details>
+<summary>Multiple webhooks</summary>
 
 ```yaml
-# Example configuration.yaml entry
 discord_webhook:
   webhooks:
-    - name: "Home Alerts"  # Optional, defaults to "Discord Webhook"
+    - name: "Home Alerts"
       webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"
       username: "Home Assistant"  # Optional
       avatar_url: "https://www.home-assistant.io/images/favicon-192x192-full.png"  # Optional
@@ -52,9 +86,23 @@ discord_webhook:
       username: "Home Security"
 ```
 
-### Option 3: YAML — Using the Notification Platform
+</details>
 
-You can also configure webhooks directly in the notify platform:
+<details>
+<summary>Single webhook (legacy)</summary>
+
+```yaml
+discord_webhook:
+  webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"
+  username: "Home Assistant"  # Optional
+  avatar_url: "https://www.home-assistant.io/images/favicon-192x192-full.png"  # Optional
+  tts: false  # Optional, default false
+```
+
+</details>
+
+<details>
+<summary>Directly on the notify platform</summary>
 
 ```yaml
 notify:
@@ -66,43 +114,27 @@ notify:
     tts: false  # Optional, default false
 ```
 
-### Option 4: YAML — Legacy Configuration (Single Webhook)
+</details>
 
-For backward compatibility, a single webhook can still be configured:
+When you configure webhooks in `configuration.yaml`, they're imported as config entries on startup (normalized the same way as the UI flow, deduplicated by `webhook_url`), and from then on can be managed from **Settings → Devices & Services** like any other entry.
 
-```yaml
-discord_webhook:
-  webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"
-  username: "Home Assistant"  # Optional
-  avatar_url: "https://www.home-assistant.io/images/favicon-192x192-full.png"  # Optional
-  tts: false  # Optional, default false
-```
+## Usage
 
-## Basic Usage
-
-Send a notification to a specific webhook:
+Call the `notify` service created for your webhook from an automation, script, or Developer Tools → Actions:
 
 ```yaml
-service: notify.discord_home_alerts  # Based on the 'name' in configuration
+service: notify.home_alerts
 data:
-  message: "This is a test message to the home alerts channel"
   title: "Important Alert"  # Optional
+  message: "This is a test message to the home alerts channel"
 ```
 
-## Documentation
+For advanced usage — embeds, images, TTS overrides, and the full service data reference — see the [advanced usage guide](docs/advanced-usage.md).
 
-For complete documentation, including advanced features like embeds, images, and automation examples, please see the [advanced usage guide](docs/advanced-usage.md).
+## Contributing
 
-## YAML Import (How YAML becomes UI entries)
-
-If you configure webhooks in `configuration.yaml` under `discord_webhook:`, they will be imported into the UI as Config Entries on startup or when the integration is reloaded. Behavior details:
-
-- Each imported entry is normalized like the UI flow (optional empty strings become `null`, and `tts` defaults if omitted).
-- Import uses the `webhook_url` as a unique identifier to prevent duplicates. If an entry with the same `webhook_url` already exists, it will be skipped.
-- Invalid entries (e.g., `webhook_url` not starting with `http`) are safely ignored during import.
-
-After import, you can manage these entries from Settings > Devices & Services > Integrations like any other UI-added instance.
+Issues and pull requests are welcome at [bensonrodney/homeassistant-discord](https://github.com/bensonrodney/homeassistant-discord/issues).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
