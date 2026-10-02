@@ -36,7 +36,7 @@ add the minimum HA version constraint (required because the code uses
   "documentation": "https://github.com/<YOUR_GITHUB_USERNAME>/homeassistant-discord",
   "dependencies": [],
   "codeowners": ["@<YOUR_GITHUB_USERNAME>"],
-  "requirements": ["aiohttp>=3.7.4"],
+  "requirements": [],
   "version": "1.0.0",
   "iot_class": "cloud_push",
   "config_flow": true,

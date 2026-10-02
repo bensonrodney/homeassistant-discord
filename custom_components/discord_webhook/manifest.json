@@ -8,6 +8,6 @@
   "documentation": "https://github.com/bensonrodney/homeassistant-discord",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/bensonrodney/homeassistant-discord/issues",
-  "requirements": ["aiohttp>=3.7.4"],
+  "requirements": [],
   "version": "1.0.6"
 }
